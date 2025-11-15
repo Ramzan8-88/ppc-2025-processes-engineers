@@ -17,6 +17,9 @@ class KamaletdinovRMaxMatrixRowsElemMPI : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  std::vector<int> t_matrix_;
+  bool valid_ = false;
 };
 
 }  // namespace kamaletdinov_r_max_matrix_rows_elem

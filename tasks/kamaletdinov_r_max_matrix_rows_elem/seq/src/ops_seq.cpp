@@ -14,34 +14,42 @@ KamaletdinovRMaxMatrixRowsElemSEQ::KamaletdinovRMaxMatrixRowsElemSEQ(const InTyp
 }
 
 bool KamaletdinovRMaxMatrixRowsElemSEQ::ValidationImpl() {
-  std::size_t n = std::get<0>(GetInput());
-  std::size_t m = std::get<1>(GetInput());
-  std::vector<int> val = std::get<2>(GetInput());
-
-  return (n > 0) && (m > 0) && (val.size() == (n * m));
+  std::size_t m = std::get<0>(GetInput());
+  std::size_t n = std::get<1>(GetInput());
+  std::vector<int> &val = std::get<2>(GetInput());
+  valid_ = (n > 0) && (m > 0) && (val.size() == (n * m));
+  return valid_;
 }
 
 bool KamaletdinovRMaxMatrixRowsElemSEQ::PreProcessingImpl() {
-  return true;
+  if(valid_) {
+    std::size_t n = std::get<0>(GetInput());
+    std::size_t m = std::get<1>(GetInput());
+    std::vector<int> &val = std::get<2>(GetInput());
+    t_matrix_ = std::vector<int>(n * m);
+    for(std::size_t i = 0; i < m; i++) {
+      for(std::size_t j = 0; j < n; j++) {
+        t_matrix_[(j * m) + i] = val[(i * n) + j];
+      }
+    }
+    return true;
+  }
+  return false;
 }
 
 bool KamaletdinovRMaxMatrixRowsElemSEQ::RunImpl() {
-  // if (GetInput() == 0) {
-  //   return false;
-  // }
-  std::size_t n = std::get<0>(GetInput());
-  std::size_t m = std::get<1>(GetInput());
-  std::vector<int> val = std::get<2>(GetInput());
-  if(((n > 0) && (m > 0) && (val.size() == (n * m))) == false) {
+  if(!valid_) {
     return false;
   }
+  std::size_t m = std::get<0>(GetInput());
+  std::size_t n = std::get<1>(GetInput());
 
   std::vector<int> max_rows_elem(n);
   for(std::size_t i = 0; i < n; i++) {
-    max_rows_elem[i] = val[i * m];
+    max_rows_elem[i] = t_matrix_[i * m];
     for(std::size_t j = 1; j < m; j++) {
-      if(max_rows_elem[i] < val[i * m + j]){
-        max_rows_elem[i] = val[i * m + j];
+      if(max_rows_elem[i] < t_matrix_[i * m + j]){
+        max_rows_elem[i] = t_matrix_[i * m + j];
       }
     }
   }

@@ -17,24 +17,36 @@ KamaletdinovRMaxMatrixRowsElemMPI::KamaletdinovRMaxMatrixRowsElemMPI(const InTyp
 }
 
 bool KamaletdinovRMaxMatrixRowsElemMPI::ValidationImpl() {
-  std::size_t n = std::get<0>(GetInput());
-  std::size_t m = std::get<1>(GetInput());
-  std::vector<int> val = std::get<2>(GetInput());
-
-  return (n > 0) && (m > 0) && (val.size() == (n * m));
+  std::size_t m = std::get<0>(GetInput());
+  std::size_t n = std::get<1>(GetInput());
+  std::vector<int> &val = std::get<2>(GetInput());
+  valid_ = (n > 0) && (m > 0) && (val.size() == (n * m))
+  return valid_;
 }
 
 bool KamaletdinovRMaxMatrixRowsElemMPI::PreProcessingImpl() {
-  return true;
+  if(valid_) {
+    std::size_t m = std::get<0>(GetInput());
+    std::size_t n = std::get<1>(GetInput());
+    std::vector<int> &val = std::get<2>(GetInput());
+    t_matrix_ = std::vector<int>(n * m);
+    for(std::size_t i = 0; i < m; i++) {
+      for(std::size_t j = 0; j < n; j++) {
+        t_matrix_[(j * m) + i] = val[(i * n) + j];
+      }
+    }
+    return true;
+  }
+  return false;
 }
 
 bool KamaletdinovRMaxMatrixRowsElemMPI::RunImpl() {
-  std::size_t n = std::get<0>(GetInput());
-  std::size_t m = std::get<1>(GetInput());
-  std::vector<int> val = std::get<2>(GetInput());
-  if (((n > 0) && (m > 0) && (val.size() == (n * m))) == false) {
+  if(!valid_) {
     return false;
   }
+  std::size_t m = std::get<0>(GetInput());
+  std::size_t n = std::get<1>(GetInput());
+  
   int rank = 0;
   int mpi_size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -61,17 +73,15 @@ bool KamaletdinovRMaxMatrixRowsElemMPI::RunImpl() {
     }
   }
 
-  {
-    int* recv_buf = new int[n * mpi_size];
-    const int* send_buf = max_rows_elem.data();
-    MPI_Gather(send_buf, n, MPI_INT, &recv_buf, n * mpi_size, MPI_INT, 0, MPI_COMM_WORLD);
-  }
-
+  int* recv_buf;    
+  const int* send_buf = max_rows_elem.data();    
+  MPI_Gather(send_buf, n, MPI_INT, recv_buf, n * mpi_size, MPI_INT, 0, MPI_COMM_WORLD);
+  
   if(rank == 0) {
-    for(size_t i = 0; i < n; i++) {
+    for(std::size_t i = 0; i < n; i++) {
       for(int j = 0; j < mpi_size; j++) {
-        if(max_rows_elem[i] < recv_buf[i*m + n*j]) {
-          max_rows_elem[i] = recv_buf[i*m + n*j];
+        if(max_rows_elem[i] < recv_buf[i * mpi_size + n * j]) {
+          max_rows_elem[i] = recv_buf[i * mpi_size + n * j];
         }
       }
     }
