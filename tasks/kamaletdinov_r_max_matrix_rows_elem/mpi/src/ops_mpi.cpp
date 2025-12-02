@@ -80,9 +80,10 @@ bool KamaletdinovRMaxMatrixRowsElemMPI::RunImpl() {
 
   std::vector<int> final_max(n, std::numeric_limits<int>::min());
   if (rank == 0) {
-    for (int p = 0; p < mpi_size; ++p) {
+    for (int proc = 0; proc < mpi_size; ++proc) {
+      const std::size_t offset = static_cast<std::size_t>(proc) * n;
       for (std::size_t i = 0; i < n; ++i) {
-        final_max[i] = std::max(final_max[i], recvbuf[static_cast<std::size_t>(p) * n + i]);
+        final_max[i] = std::max(final_max[i], recvbuf[offset + i]);
       }
     }
   }
