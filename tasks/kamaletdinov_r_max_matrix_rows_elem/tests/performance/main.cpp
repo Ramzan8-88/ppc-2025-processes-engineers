@@ -1,5 +1,11 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
+#include <cstddef>
+#include <random>
+#include <tuple>
+#include <vector>
+
 #include "kamaletdinov_r_max_matrix_rows_elem/common/include/common.hpp"
 #include "kamaletdinov_r_max_matrix_rows_elem/mpi/include/ops_mpi.hpp"
 #include "kamaletdinov_r_max_matrix_rows_elem/seq/include/ops_seq.hpp"
@@ -43,29 +49,12 @@ class KamaletdinovRMaxMatrixRowsElemPerfTest : public ppc::util::BaseRunPerfTest
     // генерация остальной матрицы, вектора ответа
     for (std::size_t i = 1; i < m; i++) {
       for (std::size_t j = 0; j < n; j++) {
-        val[i * n + j] = idis(gen);
-        if (answer[j] < val[i * n + j]) {
-          answer[j] = val[i * n + j];
-        }
+        val[(i * n) + j] = idis(gen);
+        answer[j] = std::max(answer[j], val[(i * n) + j]);
       }
     }
     input_data_ = std::make_tuple(m, n, val);
     correct_test_output_data_ = answer;
-    
-    //debug output
-    // std::string deb = "\n\n-----------\n";
-    // for(std::size_t i = 0; i < m; i++) {
-    //   for(std::size_t j = 0; j < n; j++) {
-    //     deb += std::to_string(val[i*n + j]) + " ";
-    //   }
-    //   deb += "\n";
-    // }
-    // std::cout << deb;
-    // std::cout << "----------\n";
-    // for(std::size_t i = 0; i < n; i++) {
-    //   std::cout << answer[i] << " ";
-    // }
-    // std::cout << std::endl;
   }
 };
 
@@ -74,7 +63,8 @@ TEST_P(KamaletdinovRMaxMatrixRowsElemPerfTest, RunPerfModes) {
 }
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, KamaletdinovRMaxMatrixRowsElemMPI, KamaletdinovRMaxMatrixRowsElemSEQ>(PPC_SETTINGS_kamaletdinov_r_max_matrix_rows_elem);
+    ppc::util::MakeAllPerfTasks<InType, KamaletdinovRMaxMatrixRowsElemMPI, KamaletdinovRMaxMatrixRowsElemSEQ>(
+        PPC_SETTINGS_kamaletdinov_r_max_matrix_rows_elem);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

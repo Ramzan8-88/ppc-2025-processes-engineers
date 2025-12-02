@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "kamaletdinov_r_max_matrix_rows_elem/common/include/common.hpp"
 #include "task/include/task.hpp"
 

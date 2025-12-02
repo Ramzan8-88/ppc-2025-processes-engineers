@@ -1,9 +1,11 @@
 #pragma once
 
+#include <vector>
+
 #include "kamaletdinov_r_max_matrix_rows_elem/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace kamaletdinov_r_max_matrix_rows_elem{
+namespace kamaletdinov_r_max_matrix_rows_elem {
 
 class KamaletdinovRMaxMatrixRowsElemMPI : public BaseTask {
  public:
