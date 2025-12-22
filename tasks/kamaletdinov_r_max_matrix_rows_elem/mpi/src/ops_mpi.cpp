@@ -55,21 +55,67 @@ bool KamaletdinovRMaxMatrixRowsElemMPI::RunImpl() {
   MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
 
   std::size_t total = t_matrix_.size();
-  std::size_t process_step = total / static_cast<std::size_t>(mpi_size);
-  std::size_t start = process_step * static_cast<std::size_t>(rank);
-  std::size_t end = process_step * static_cast<std::size_t>(rank + 1);
-  if (rank == mpi_size - 1) {
-    end = total;
+
+  // Расчет количества элементов для каждого процесса
+  std::size_t process_elements = total / static_cast<std::size_t>(mpi_size);
+  // Выравниваем до границ строк (если нужно распределять по строкам)
+  std::size_t rows_per_process = process_elements / m;
+  std::size_t elements_per_process = rows_per_process * m;
+
+  // Подготовка sendcounts и displacements для Scatterv (если распределение неравномерное)
+  std::vector<int> sendcounts(mpi_size);
+  std::vector<int> displacements(mpi_size);
+  std::size_t current_displacement = 0;
+
+  for (int i = 0; i < mpi_size; ++i) {
+    std::size_t rows_for_process = rows_per_process;
+    if (i == mpi_size - 1) {
+      // Последний процесс получает оставшиеся строки
+      rows_for_process = n - (rows_per_process * (mpi_size - 1));
+    }
+    sendcounts[i] = static_cast<int>(rows_for_process * m);
+    displacements[i] = static_cast<int>(current_displacement);
+    current_displacement += rows_for_process * m;
   }
 
-  // compute local max per column
+  // Локальный буфер для приема данных
+  std::size_t local_elements = sendcounts[rank];
+  std::vector<int> local_data(local_elements);
+
+  // Распределяем данные с использованием Scatterv
+  MPI_Scatterv(t_matrix_.data(),      // sendbuf
+               sendcounts.data(),     // sendcounts
+               displacements.data(),  // displacements
+               MPI_INT,               // datatype
+               local_data.data(),     // recvbuf
+               sendcounts[rank],      // recvcount
+               MPI_INT,               // datatype
+               0,                     // root
+               MPI_COMM_WORLD         // comm
+  );
+
+  // Теперь обрабатываем локальные данные
+  std::size_t local_rows = local_elements / m;
+
+  // Вычисляем локальный максимум по столбцам
   std::vector<int> local_max(n, std::numeric_limits<int>::min());
-  for (std::size_t i = start; i < end; ++i) {
-    std::size_t col = i / m;
-    local_max[col] = std::max(local_max[col], t_matrix_[i]);
+
+  for (std::size_t i = 0; i < local_elements; ++i) {
+    std::size_t global_col = (displacements[rank] + i) % m;  // если распределение по строкам
+    // Или если нужно определить столбец в исходной матрице:
+    // std::size_t global_idx = displacements[rank] + i;
+    // std::size_t global_row = global_idx / m;
+    // std::size_t global_col = global_idx % m;
+
+    // Для распределения по строкам:
+    std::size_t local_row = i / m;
+    std::size_t local_col = i % m;
+    std::size_t global_col = local_col;  // столбцы остаются теми же
+
+    local_max[global_col] = std::max(local_max[global_col], local_data[i]);
   }
 
-  // root receives all local maxima in recvbuf
+  // Корневой процесс получает все локальные максимумы
   std::vector<int> recvbuf;
   if (rank == 0) {
     recvbuf.resize(static_cast<std::size_t>(mpi_size) * n, std::numeric_limits<int>::min());
@@ -77,21 +123,6 @@ bool KamaletdinovRMaxMatrixRowsElemMPI::RunImpl() {
 
   MPI_Gather(local_max.data(), static_cast<int>(n), MPI_INT, rank == 0 ? recvbuf.data() : nullptr, static_cast<int>(n),
              MPI_INT, 0, MPI_COMM_WORLD);
-
-  std::vector<int> final_max(n, std::numeric_limits<int>::min());
-  if (rank == 0) {
-    for (int proc = 0; proc < mpi_size; ++proc) {
-      const std::size_t offset = static_cast<std::size_t>(proc) * n;
-      for (std::size_t i = 0; i < n; ++i) {
-        final_max[i] = std::max(final_max[i], recvbuf[offset + i]);
-      }
-    }
-  }
-
-  MPI_Bcast(final_max.data(), static_cast<int>(n), MPI_INT, 0, MPI_COMM_WORLD);
-
-  GetOutput() = final_max;
-  return true;
 }
 
 bool KamaletdinovRMaxMatrixRowsElemMPI::PostProcessingImpl() {
