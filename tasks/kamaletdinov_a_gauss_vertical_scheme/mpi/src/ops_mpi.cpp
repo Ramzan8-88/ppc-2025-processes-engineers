@@ -11,12 +11,12 @@
 
 namespace kamaletdinov_a_gauss_vertical_scheme {
 
-kamaletdinovAGaussVerticalSchemeMPI::kamaletdinovAGaussVerticalSchemeMPI(const InType &in) {
+KamaletdinovAGaussVerticalSchemeMPI::KamaletdinovAGaussVerticalSchemeMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
 
-bool kamaletdinovAGaussVerticalSchemeMPI::ValidationImpl() {
+bool KamaletdinovAGaussVerticalSchemeMPI::ValidationImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank_);
   if (rank_ != 0) {
     return true;
@@ -32,7 +32,7 @@ bool kamaletdinovAGaussVerticalSchemeMPI::ValidationImpl() {
   return GetInput().size() == expected_size;
 }
 
-bool kamaletdinovAGaussVerticalSchemeMPI::PreProcessingImpl() {
+bool KamaletdinovAGaussVerticalSchemeMPI::PreProcessingImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank_);
   MPI_Comm_size(MPI_COMM_WORLD, &size_);
 
@@ -52,7 +52,7 @@ bool kamaletdinovAGaussVerticalSchemeMPI::PreProcessingImpl() {
   return true;
 }
 
-int kamaletdinovAGaussVerticalSchemeMPI::FindPivotRow(int k, int cols) {
+int KamaletdinovAGaussVerticalSchemeMPI::FindPivotRow(int k, int cols) {
   int max_row = k;
   double max_val = std::abs(extended_matrix_[(k * cols) + k]);
   for (int i = k + 1; i < n_; i++) {
@@ -65,13 +65,13 @@ int kamaletdinovAGaussVerticalSchemeMPI::FindPivotRow(int k, int cols) {
   return max_row;
 }
 
-void kamaletdinovAGaussVerticalSchemeMPI::SwapRows(int row1, int row2, int cols) {
+void KamaletdinovAGaussVerticalSchemeMPI::SwapRows(int row1, int row2, int cols) {
   for (int j = 0; j < cols; j++) {
     std::swap(extended_matrix_[(row1 * cols) + j], extended_matrix_[(row2 * cols) + j]);
   }
 }
 
-void kamaletdinovAGaussVerticalSchemeMPI::SynchronizeRow(int k, int row, int cols) {
+void KamaletdinovAGaussVerticalSchemeMPI::SynchronizeRow(int k, int row, int cols) {
   std::vector<double> row_data(cols - k);
   for (int j = k; j < cols; j++) {
     row_data[j - k] = extended_matrix_[(row * cols) + j];
@@ -100,7 +100,7 @@ void kamaletdinovAGaussVerticalSchemeMPI::SynchronizeRow(int k, int row, int col
   }
 }
 
-void kamaletdinovAGaussVerticalSchemeMPI::EliminateColumn(int k, int cols) {
+void KamaletdinovAGaussVerticalSchemeMPI::EliminateColumn(int k, int cols) {
   double pivot = extended_matrix_[(k * cols) + k];
   if (std::abs(pivot) < 1e-10) {
     return;
@@ -125,7 +125,7 @@ void kamaletdinovAGaussVerticalSchemeMPI::EliminateColumn(int k, int cols) {
   }
 }
 
-void kamaletdinovAGaussVerticalSchemeMPI::BackSubstitution() {
+void KamaletdinovAGaussVerticalSchemeMPI::BackSubstitution() {
   int cols = n_ + 1;
   if (rank_ == 0) {
     for (int i = n_ - 1; i >= 0; i--) {
@@ -137,7 +137,7 @@ void kamaletdinovAGaussVerticalSchemeMPI::BackSubstitution() {
   }
 }
 
-bool kamaletdinovAGaussVerticalSchemeMPI::RunImpl() {
+bool KamaletdinovAGaussVerticalSchemeMPI::RunImpl() {
   int cols = n_ + 1;
   for (int k = 0; k < n_; k++) {
     int max_row = FindPivotRow(k, cols);
@@ -150,7 +150,7 @@ bool kamaletdinovAGaussVerticalSchemeMPI::RunImpl() {
   return true;
 }
 
-bool kamaletdinovAGaussVerticalSchemeMPI::PostProcessingImpl() {
+bool KamaletdinovAGaussVerticalSchemeMPI::PostProcessingImpl() {
   MPI_Bcast(solution_.data(), n_, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   GetOutput() = solution_;
   return true;
