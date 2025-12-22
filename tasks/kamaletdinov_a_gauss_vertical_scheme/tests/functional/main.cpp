@@ -7,11 +7,11 @@
 #include <tuple>
 #include <vector>
 
-#include "util/include/func_test_util.hpp"
-#include "util/include/util.hpp"
 #include "kamaletdinov_a_gauss_vertical_scheme/common/include/common.hpp"
 #include "kamaletdinov_a_gauss_vertical_scheme/mpi/include/ops_mpi.hpp"
 #include "kamaletdinov_a_gauss_vertical_scheme/seq/include/ops_seq.hpp"
+#include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace kamaletdinov_a_gauss_vertical_scheme {
 
@@ -140,7 +140,8 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<kamaletdinovAG
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = kamaletdinovAGaussVerticalSchemeFuncTests::PrintFuncTestName<kamaletdinovAGaussVerticalSchemeFuncTests>;
+const auto kPerfTestName =
+    kamaletdinovAGaussVerticalSchemeFuncTests::PrintFuncTestName<kamaletdinovAGaussVerticalSchemeFuncTests>;
 
 INSTANTIATE_TEST_SUITE_P(GaussSolverTests, kamaletdinovAGaussVerticalSchemeFuncTests, kGtestValues, kPerfTestName);
 

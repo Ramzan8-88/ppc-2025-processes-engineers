@@ -5,10 +5,10 @@
 #include <cstddef>
 #include <vector>
 
-#include "util/include/perf_test_util.hpp"
 #include "kamaletdinov_a_gauss_vertical_scheme/common/include/common.hpp"
 #include "kamaletdinov_a_gauss_vertical_scheme/mpi/include/ops_mpi.hpp"
 #include "kamaletdinov_a_gauss_vertical_scheme/seq/include/ops_seq.hpp"
+#include "util/include/perf_test_util.hpp"
 
 namespace kamaletdinov_a_gauss_vertical_scheme {
 
