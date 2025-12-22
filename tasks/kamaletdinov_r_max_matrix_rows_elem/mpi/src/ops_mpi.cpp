@@ -60,7 +60,6 @@ bool KamaletdinovRMaxMatrixRowsElemMPI::RunImpl() {
   std::size_t process_elements = total / static_cast<std::size_t>(mpi_size);
   // Выравниваем до границ строк (если нужно распределять по строкам)
   std::size_t rows_per_process = process_elements / m;
-  std::size_t elements_per_process = rows_per_process * m;
 
   // Подготовка sendcounts и displacements для Scatterv (если распределение неравномерное)
   std::vector<int> sendcounts(mpi_size);
@@ -94,15 +93,11 @@ bool KamaletdinovRMaxMatrixRowsElemMPI::RunImpl() {
                MPI_COMM_WORLD         // comm
   );
 
-  // Теперь обрабатываем локальные данные
-  std::size_t local_rows = local_elements / m;
-
   // Вычисляем локальный максимум по столбцам
   std::vector<int> local_max(n, std::numeric_limits<int>::min());
 
   for (std::size_t i = 0; i < local_elements; ++i) {
     // Для распределения по строкам:
-    std::size_t local_row = i / m;
     std::size_t local_col = i % m;
     std::size_t global_col = local_col;  // столбцы остаются теми же
 
