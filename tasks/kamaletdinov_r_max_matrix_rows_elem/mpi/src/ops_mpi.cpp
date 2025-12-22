@@ -11,7 +11,7 @@
 
 namespace kamaletdinov_r_max_matrix_rows_elem {
 
-KamaletdinovRMaxMatrixRowsElemMPI::KamaletdinovRMaxMatrixRowsElemMPI(const InType &in) {
+KamaletdinovRMaxMatrixRowsElemMPI:: KamaletdinovRMaxMatrixRowsElemMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = std::vector<int>();
@@ -46,7 +46,7 @@ bool KamaletdinovRMaxMatrixRowsElemMPI::RunImpl() {
     return false;
   }
 
-  std::size_t m = std::get<0>(GetInput());
+  std::size_t m = std:: get<0>(GetInput());
   std::size_t n = std::get<1>(GetInput());
 
   int rank = 0;
@@ -95,7 +95,7 @@ bool KamaletdinovRMaxMatrixRowsElemMPI::RunImpl() {
   );
 
   // Теперь обрабатываем локальные данные
-  std::size_t local_rows = local_elements / m;
+  std:: size_t local_rows = local_elements / m;
 
   // Вычисляем локальный максимум по столбцам
   std::vector<int> local_max(n, std::numeric_limits<int>::min());
@@ -112,7 +112,7 @@ bool KamaletdinovRMaxMatrixRowsElemMPI::RunImpl() {
   // Корневой процесс получает все локальные максимумы
   std::vector<int> recvbuf;
   if (rank == 0) {
-    recvbuf.resize(static_cast<std::size_t>(mpi_size) * n, std::numeric_limits<int>::min());
+    recvbuf.resize(static_cast<std::size_t>(mpi_size) * n, std::numeric_limits<int>:: min());
   }
 
   MPI_Gather(local_max.data(), static_cast<int>(n), MPI_INT, rank == 0 ? recvbuf.data() : nullptr, static_cast<int>(n),
