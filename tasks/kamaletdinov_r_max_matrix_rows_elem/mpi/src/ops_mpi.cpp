@@ -101,12 +101,6 @@ bool KamaletdinovRMaxMatrixRowsElemMPI::RunImpl() {
   std::vector<int> local_max(n, std::numeric_limits<int>::min());
 
   for (std::size_t i = 0; i < local_elements; ++i) {
-    std::size_t global_col = (displacements[rank] + i) % m;  // если распределение по строкам
-    // Или если нужно определить столбец в исходной матрице:
-    // std::size_t global_idx = displacements[rank] + i;
-    // std::size_t global_row = global_idx / m;
-    // std::size_t global_col = global_idx % m;
-
     // Для распределения по строкам:
     std::size_t local_row = i / m;
     std::size_t local_col = i % m;
@@ -123,6 +117,8 @@ bool KamaletdinovRMaxMatrixRowsElemMPI::RunImpl() {
 
   MPI_Gather(local_max.data(), static_cast<int>(n), MPI_INT, rank == 0 ? recvbuf.data() : nullptr, static_cast<int>(n),
              MPI_INT, 0, MPI_COMM_WORLD);
+
+  return true;
 }
 
 bool KamaletdinovRMaxMatrixRowsElemMPI::PostProcessingImpl() {
