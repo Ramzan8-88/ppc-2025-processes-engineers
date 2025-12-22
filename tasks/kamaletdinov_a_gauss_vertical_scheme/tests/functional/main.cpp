@@ -141,7 +141,7 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<KamaletdinovAG
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName =
-    KamaletdinovAGaussVerticalSchemeFuncTests::PrintFuncTestName<kamaletdinovAGaussVerticalSchemeFuncTests>;
+    KamaletdinovAGaussVerticalSchemeFuncTests::PrintFuncTestName<KamaletdinovAGaussVerticalSchemeFuncTests>;
 
 INSTANTIATE_TEST_SUITE_P(GaussSolverTests, KamaletdinovAGaussVerticalSchemeFuncTests, kGtestValues, kPerfTestName);
 
