@@ -122,7 +122,7 @@ class KamaletdinovAGaussVerticalSchemeFuncTests : public ppc::util::BaseRunFuncT
   OutType expected_output_;
 };
 
-TEST_P(kamaletdinovAGaussVerticalSchemeFuncTests, GaussSolveTest) {
+TEST_P(KamaletdinovAGaussVerticalSchemeFuncTests, GaussSolveTest) {
   ExecuteTest(GetParam());
 }
 
@@ -133,16 +133,16 @@ const std::array<TestType, 10> kTestParam = {
     std::make_tuple(7, "DiagonalMatrix"),    std::make_tuple(8, "UpperTriangular"),
     std::make_tuple(9, "FractionalSol"),     std::make_tuple(10, "ZeroRHS")};
 
-const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<kamaletdinovAGaussVerticalSchemeMPI, InType>(
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<KamaletdinovAGaussVerticalSchemeMPI, InType>(
                                                kTestParam, PPC_SETTINGS_kamaletdinov_a_gauss_vertical_scheme),
-                                           ppc::util::AddFuncTask<kamaletdinovAGaussVerticalSchemeSEQ, InType>(
+                                           ppc::util::AddFuncTask<KamaletdinovAGaussVerticalSchemeSEQ, InType>(
                                                kTestParam, PPC_SETTINGS_kamaletdinov_a_gauss_vertical_scheme));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName =
-    kamaletdinovAGaussVerticalSchemeFuncTests::PrintFuncTestName<kamaletdinovAGaussVerticalSchemeFuncTests>;
+    KamaletdinovAGaussVerticalSchemeFuncTests::PrintFuncTestName<kamaletdinovAGaussVerticalSchemeFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(GaussSolverTests, kamaletdinovAGaussVerticalSchemeFuncTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(GaussSolverTests, KamaletdinovAGaussVerticalSchemeFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace kamaletdinov_a_gauss_vertical_scheme
