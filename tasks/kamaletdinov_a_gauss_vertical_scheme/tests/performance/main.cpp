@@ -78,18 +78,18 @@ class KamaletdinovAGaussVerticalSchemePerfTests : public ppc::util::BaseRunPerfT
   }
 };
 
-TEST_P(kamaletdinovAGaussVerticalSchemePerfTests, RunPerfModes) {
+TEST_P(KamaletdinovAGaussVerticalSchemePerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, kamaletdinovAGaussVerticalSchemeMPI, kamaletdinovAGaussVerticalSchemeSEQ>(
+    ppc::util::MakeAllPerfTasks<InType, KamaletdinovAGaussVerticalSchemeMPI, KamaletdinovAGaussVerticalSchemeSEQ>(
         PPC_SETTINGS_kamaletdinov_a_gauss_vertical_scheme);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = kamaletdinovAGaussVerticalSchemePerfTests::CustomPerfTestName;
+const auto kPerfTestName = KamaletdinovAGaussVerticalSchemePerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, kamaletdinovAGaussVerticalSchemePerfTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, KamaletdinovAGaussVerticalSchemePerfTests, kGtestValues, kPerfTestName);
 
 }  // namespace kamaletdinov_a_gauss_vertical_scheme
