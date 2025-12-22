@@ -54,7 +54,7 @@ bool CompareVectors(const std::vector<double> &a, const std::vector<double> &b, 
 
 }  // namespace
 
-class kamaletdinovAGaussVerticalSchemePerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class KamaletdinovAGaussVerticalSchemePerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kMatrixSize_ = 300;
   InType input_data_;
   OutType expected_output_;

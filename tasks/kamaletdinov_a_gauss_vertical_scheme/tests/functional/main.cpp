@@ -38,7 +38,7 @@ bool CompareVectors(const std::vector<double> &a, const std::vector<double> &b, 
 
 }  // namespace
 
-class kamaletdinovAGaussVerticalSchemeFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class KamaletdinovAGaussVerticalSchemeFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);

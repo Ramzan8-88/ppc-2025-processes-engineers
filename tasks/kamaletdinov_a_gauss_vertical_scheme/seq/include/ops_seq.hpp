@@ -7,12 +7,12 @@
 
 namespace kamaletdinov_a_gauss_vertical_scheme {
 
-class kamaletdinovAGaussVerticalSchemeSEQ : public BaseTask {
+class KamaletdinovAGaussVerticalSchemeSEQ : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
-  explicit kamaletdinovAGaussVerticalSchemeSEQ(const InType &in);
+  explicit KamaletdinovAGaussVerticalSchemeSEQ(const InType &in);
 
  private:
   bool ValidationImpl() override;
