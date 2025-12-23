@@ -105,9 +105,7 @@ void MergeKeepPart(std::vector<int> &local, const std::vector<int> &received, bo
   }
 }
 
-}  // namespace
-
-static void NeighborExchangeStatic(std::vector<int> &local, int partner_rank, bool keep_lower) {
+void NeighborExchangeStatic(std::vector<int> &local, int partner_rank, bool keep_lower) {
   const int send_size = static_cast<int>(local.size());
   int recv_size = 0;
   MPI_Sendrecv(&send_size, 1, MPI_INT, partner_rank, 0, &recv_size, 1, MPI_INT, partner_rank, 0, MPI_COMM_WORLD,
@@ -125,8 +123,11 @@ static void NeighborExchangeStatic(std::vector<int> &local, int partner_rank, bo
   }
 }
 
-void KamaletdinovQuicksortWithBatcherEvenOddMergeMPI::NeighborExchange(std::vector<int> &local, int partner_rank,
-                                                                       bool keep_lower) {
+}  // namespace
+
+void KamaletdinovQuicksortWithBatcherEvenOddMergeMPI::NeighborExchange(
+    std::vector<int> &local, int partner_rank,
+    bool keep_lower) {  // NOLINT(readability-convert-member-functions-to-static)
   NeighborExchangeStatic(local, partner_rank, keep_lower);
 }
 
@@ -141,19 +142,16 @@ void KamaletdinovQuicksortWithBatcherEvenOddMergeMPI::BatcherPhases(std::vector<
   for (int phase = 0; phase < phase_count; ++phase) {
     const bool even_phase = (phase % 2 == 0);
 
-    if (even_phase) {
-      if (is_even_rank && has_next) {
-        NeighborExchange(local, rank + 1, true);
-      } else if (!is_even_rank && has_prev) {
-        NeighborExchange(local, rank - 1, false);
-      }
-    } else {
-      if (!is_even_rank && has_next) {
-        NeighborExchange(local, rank + 1, true);
-      } else if (is_even_rank && has_prev) {
-        NeighborExchange(local, rank - 1, false);
-      }
+    // Direction: +1 -> talk to rank+1 (keep lower part), -1 -> talk to rank-1 (keep upper part)
+    const int direction = (even_phase == is_even_rank) ? 1 : -1;
+    const bool can_communicate = (direction > 0 && has_next) || (direction < 0 && has_prev);
+    if (!can_communicate) {
+      continue;
     }
+
+    const int partner = rank + direction;
+    const bool keep_lower = direction > 0;
+    NeighborExchange(local, partner, keep_lower);
   }
 }
 
