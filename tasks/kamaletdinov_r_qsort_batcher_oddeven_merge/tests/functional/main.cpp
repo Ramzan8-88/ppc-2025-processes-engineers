@@ -7,9 +7,9 @@
 #include <tuple>
 #include <vector>
 
-#include "kamaletdinov_r_qsort_batcher_oddeven_merge/common/include/common.hpp"
-#include "kamaletdinov_r_qsort_batcher_oddeven_merge/mpi/include/ops_mpi.hpp"
-#include "kamaletdinov_r_qsort_batcher_oddeven_merge/seq/include/ops_seq.hpp"
+#include "kamaletdinov_quicksort_with_batcher_even_odd_merge/common/include/common.hpp"
+#include "kamaletdinov_quicksort_with_batcher_even_odd_merge/mpi/include/ops_mpi.hpp"
+#include "kamaletdinov_quicksort_with_batcher_even_odd_merge/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -75,11 +75,10 @@ const auto kTestTasksList =
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName = KamaletdinovQuicksortWithBatcherEvenOddMergeFuncTests::PrintFuncTestName<
-    KamaletdinovQuicksortWithBatcherEvenOddMergeFuncTests>
-    kamaletdinov_r_qsort_batcher_oddeven_merge
+    KamaletdinovQuicksortWithBatcherEvenOddMergeFuncTests>;
 
-        INSTANTIATE_TEST_SUITE_P(QuicksortWithBatcherEvenOddMerge,
-                                 KamaletdinovQuicksortWithBatcherEvenOddMergeFuncTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(QuicksortWithBatcherEvenOddMerge, KamaletdinovQuicksortWithBatcherEvenOddMergeFuncTests,
+                         kGtestValues, kPerfTestName);
 
 }  // namespace
 
