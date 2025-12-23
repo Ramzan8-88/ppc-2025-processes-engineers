@@ -137,7 +137,6 @@ void KamaletdinovQuicksortWithBatcherEvenOddMergeMPI::NeighborExchange(std::vect
   NeighborExchangeStatic(local, partner_rank, keep_lower);
 }
 
-
 void KamaletdinovQuicksortWithBatcherEvenOddMergeMPI::BatcherPhases(std::vector<int> &local, int rank, int size,
                                                                     int global_size) {
   int min_block = std::max(1, global_size / size);
