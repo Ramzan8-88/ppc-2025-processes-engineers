@@ -20,6 +20,8 @@ class KamaletdinovQuicksortWithBatcherEvenOddMergeSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
   static std::pair<int, int> PartitionRange(std::vector<int> &array, int left, int right);
+  static void PushPartitionsToStack(std::vector<std::pair<int, int>> &stack, int left, int right,
+                                    const std::pair<int, int> &borders);
 };
 
 }  // namespace kamaletdinov_quicksort_with_batcher_even_odd_merge
