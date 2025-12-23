@@ -75,10 +75,11 @@ const auto kTestTasksList =
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName = KamaletdinovQuicksortWithBatcherEvenOddMergeFuncTests::PrintFuncTestName<
-    KamaletdinovQuicksortWithBatcherEvenOddMergeFuncTests>kamaletdinov_r_qsort_batcher_oddeven_merge
+    KamaletdinovQuicksortWithBatcherEvenOddMergeFuncTests>
+    kamaletdinov_r_qsort_batcher_oddeven_merge
 
-INSTANTIATE_TEST_SUITE_P(QuicksortWithBatcherEvenOddMerge, KamaletdinovQuicksortWithBatcherEvenOddMergeFuncTests,
-                         kGtestValues, kPerfTestName);
+        INSTANTIATE_TEST_SUITE_P(QuicksortWithBatcherEvenOddMerge,
+                                 KamaletdinovQuicksortWithBatcherEvenOddMergeFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 
