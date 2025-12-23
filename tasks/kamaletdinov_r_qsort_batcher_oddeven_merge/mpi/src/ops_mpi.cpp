@@ -86,6 +86,10 @@ void MergeKeepPart(std::vector<int> &local, const std::vector<int> &received, bo
 
 void PerformEvenPhaseExchange(std::vector<int> &local, int rank, int size, bool is_even_rank, bool has_next,
                               bool has_prev) {
+  (void)local;
+  (void)rank;
+  (void)size;
+
   if (is_even_rank && has_next) {
     // NeighborExchange call will be made in caller
   }
@@ -96,6 +100,10 @@ void PerformEvenPhaseExchange(std::vector<int> &local, int rank, int size, bool 
 
 void PerformOddPhaseExchange(std::vector<int> &local, int rank, int size, bool is_even_rank, bool has_next,
                              bool has_prev) {
+  (void)local;
+  (void)rank;
+  (void)size;
+
   if (!is_even_rank && has_next) {
     // NeighborExchange call will be made in caller
   }
@@ -128,6 +136,7 @@ void KamaletdinovQuicksortWithBatcherEvenOddMergeMPI::NeighborExchange(std::vect
                                                                        bool keep_lower) {
   NeighborExchangeStatic(local, partner_rank, keep_lower);
 }
+
 
 void KamaletdinovQuicksortWithBatcherEvenOddMergeMPI::BatcherPhases(std::vector<int> &local, int rank, int size,
                                                                     int global_size) {
