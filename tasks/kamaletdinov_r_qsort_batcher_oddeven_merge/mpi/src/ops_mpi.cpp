@@ -84,7 +84,7 @@ void MergeKeepPart(std::vector<int> &local, const std::vector<int> &received, bo
 
 }  // namespace
 
-static void KamaletdinovQuicksortWithBatcherEvenOddMergeMPI::NeighborExchange(std::vector<int> &local, int partner_rank,
+void KamaletdinovQuicksortWithBatcherEvenOddMergeMPI::NeighborExchange(std::vector<int> &local, int partner_rank,
                                                                               bool keep_lower) {
   const int send_size = static_cast<int>(local.size());
   int recv_size = 0;
