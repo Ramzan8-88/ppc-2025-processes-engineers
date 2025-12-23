@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "kamaletdinov_quicksort_with_batcher_even_odd_merge/common/include/common.hpp"
+#include "kamaletdinov_r_qsort_batcher_oddeven_merge/common/include/common.hpp"
 #include "task/include/task.hpp"
 
 namespace kamaletdinov_quicksort_with_batcher_even_odd_merge {

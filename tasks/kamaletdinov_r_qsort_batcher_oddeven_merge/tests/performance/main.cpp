@@ -3,9 +3,9 @@
 #include <algorithm>
 #include <vector>
 
-#include "kamaletdinov_quicksort_with_batcher_even_odd_merge/common/include/common.hpp"
-#include "kamaletdinov_quicksort_with_batcher_even_odd_merge/mpi/include/ops_mpi.hpp"
-#include "kamaletdinov_quicksort_with_batcher_even_odd_merge/seq/include/ops_seq.hpp"
+#include "kamaletdinov_r_qsort_batcher_oddeven_merge/common/include/common.hpp"
+#include "kamaletdinov_r_qsort_batcher_oddeven_merge/mpi/include/ops_mpi.hpp"
+#include "kamaletdinov_r_qsort_batcher_oddeven_merge/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace kamaletdinov_quicksort_with_batcher_even_odd_merge {

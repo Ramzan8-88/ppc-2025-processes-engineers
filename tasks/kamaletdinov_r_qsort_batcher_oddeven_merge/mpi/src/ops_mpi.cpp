@@ -1,4 +1,4 @@
-#include "kamaletdinov_quicksort_with_batcher_even_odd_merge/mpi/include/ops_mpi.hpp"
+#include "kamaletdinov_r_qsort_batcher_oddeven_merge/mpi/include/ops_mpi.hpp"
 
 #include <mpi.h>
 
