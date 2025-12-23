@@ -84,12 +84,9 @@ void MergeKeepPart(std::vector<int> &local, const std::vector<int> &received, bo
   }
 }
 
-void PerformEvenPhaseExchange(std::vector<int> &local, int rank, int size, bool is_even_rank, bool has_next,
-                              bool has_prev) {
-  (void)local;
-  (void)rank;
-  (void)size;
-
+// Unused helpers kept for possible future use; silenced to satisfy -Wunused-function
+[[maybe_unused]] void PerformEvenPhaseExchange(std::vector<int> & /*local*/, int /*rank*/, int /*size*/,
+                                               bool is_even_rank, bool has_next, bool has_prev) {
   if (is_even_rank && has_next) {
     // NeighborExchange call will be made in caller
   }
@@ -98,12 +95,8 @@ void PerformEvenPhaseExchange(std::vector<int> &local, int rank, int size, bool 
   }
 }
 
-void PerformOddPhaseExchange(std::vector<int> &local, int rank, int size, bool is_even_rank, bool has_next,
-                             bool has_prev) {
-  (void)local;
-  (void)rank;
-  (void)size;
-
+[[maybe_unused]] void PerformOddPhaseExchange(std::vector<int> & /*local*/, int /*rank*/, int /*size*/,
+                                              bool is_even_rank, bool has_next, bool has_prev) {
   if (!is_even_rank && has_next) {
     // NeighborExchange call will be made in caller
   }
