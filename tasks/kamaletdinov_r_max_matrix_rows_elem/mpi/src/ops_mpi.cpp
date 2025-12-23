@@ -54,23 +54,20 @@ bool KamaletdinovRMaxMatrixRowsElemMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
 
-  std::size_t total = t_matrix_.size();
+  // Распределяем строки транспонированной матрицы между процессами
+  // Транспонированная матрица имеет n строк по m элементов каждая
+  std::size_t rows_per_process = n / static_cast<std::size_t>(mpi_size);
+  std::size_t remainder = n % static_cast<std::size_t>(mpi_size);
 
-  // Расчет количества элементов для каждого процесса
-  std::size_t process_elements = total / static_cast<std::size_t>(mpi_size);
-  // Выравниваем до границ строк (если нужно распределять по строкам)
-  std::size_t rows_per_process = process_elements / m;
-
-  // Подготовка sendcounts и displacements для Scatterv (если распределение неравномерное)
+  // Подготовка sendcounts и displacements для Scatterv
   std::vector<int> sendcounts(mpi_size);
   std::vector<int> displacements(mpi_size);
   std::size_t current_displacement = 0;
 
   for (int i = 0; i < mpi_size; ++i) {
     std::size_t rows_for_process = rows_per_process;
-    if (i == mpi_size - 1) {
-      // Последний процесс получает оставшиеся строки
-      rows_for_process = n - (rows_per_process * (mpi_size - 1));
+    if (static_cast<std::size_t>(i) < remainder) {
+      rows_for_process += 1;
     }
     sendcounts[i] = static_cast<int>(rows_for_process * m);
     displacements[i] = static_cast<int>(current_displacement);
@@ -79,6 +76,7 @@ bool KamaletdinovRMaxMatrixRowsElemMPI::RunImpl() {
 
   // Локальный буфер для приема данных
   std::size_t local_elements = sendcounts[rank];
+  std::size_t local_rows = local_elements / m;
   std::vector<int> local_data(local_elements);
 
   // Распределяем данные с использованием Scatterv
@@ -93,15 +91,32 @@ bool KamaletdinovRMaxMatrixRowsElemMPI::RunImpl() {
                MPI_COMM_WORLD         // comm
   );
 
-  // Вычисляем локальный максимум по столбцам
+  // Вычисляем локальный максимум для строк, которые получил этот процесс
+  // Каждая строка транспонированной матрицы соответствует столбцу исходной матрицы
   std::vector<int> local_max(n, std::numeric_limits<int>::min());
 
-  for (std::size_t i = 0; i < local_elements; ++i) {
-    // Для распределения по строкам:
-    std::size_t local_col = i % m;
-    std::size_t global_col = local_col;  // столбцы остаются теми же
+  // Определяем, какие глобальные строки (столбцы исходной матрицы) обрабатывает этот процесс
+  std::size_t start_row = 0;
+  for (int i = 0; i < rank; ++i) {
+    std::size_t rows_for_i = rows_per_process;
+    if (static_cast<std::size_t>(i) < remainder) {
+      rows_for_i += 1;
+    }
+    start_row += rows_for_i;
+  }
 
-    local_max[global_col] = std::max(local_max[global_col], local_data[i]);
+  // Обрабатываем локальные строки
+  for (std::size_t local_row = 0; local_row < local_rows; ++local_row) {
+    std::size_t global_row = start_row + local_row;
+    if (global_row >= n) {
+      break;
+    }
+    // Инициализируем максимум первым элементом строки
+    local_max[global_row] = local_data[local_row * m];
+    // Находим максимум в строке
+    for (std::size_t col = 1; col < m; ++col) {
+      local_max[global_row] = std::max(local_max[global_row], local_data[local_row * m + col]);
+    }
   }
 
   // Корневой процесс получает все локальные максимумы
@@ -112,6 +127,18 @@ bool KamaletdinovRMaxMatrixRowsElemMPI::RunImpl() {
 
   MPI_Gather(local_max.data(), static_cast<int>(n), MPI_INT, rank == 0 ? recvbuf.data() : nullptr, static_cast<int>(n),
              MPI_INT, 0, MPI_COMM_WORLD);
+
+  // На корневом процессе вычисляем финальные максимумы
+  if (rank == 0) {
+    std::vector<int> result(n);
+    for (std::size_t col = 0; col < n; ++col) {
+      result[col] = std::numeric_limits<int>::min();
+      for (int proc = 0; proc < mpi_size; ++proc) {
+        result[col] = std::max(result[col], recvbuf[proc * n + col]);
+      }
+    }
+    GetOutput() = result;
+  }
 
   return true;
 }
