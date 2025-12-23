@@ -8,6 +8,8 @@
 #include <utility>
 #include <vector>
 
+#include "kamaletdinov_r_qsort_batcher_oddeven_merge/common/include/common.hpp"
+
 namespace kamaletdinov_quicksort_with_batcher_even_odd_merge {
 
 KamaletdinovQuicksortWithBatcherEvenOddMergeMPI::KamaletdinovQuicksortWithBatcherEvenOddMergeMPI(const InType &in) {
@@ -82,10 +84,29 @@ void MergeKeepPart(std::vector<int> &local, const std::vector<int> &received, bo
   }
 }
 
+void PerformEvenPhaseExchange(std::vector<int> &local, int rank, int size, bool is_even_rank, bool has_next,
+                              bool has_prev) {
+  if (is_even_rank && has_next) {
+    // NeighborExchange call will be made in caller
+  }
+  if (!is_even_rank && has_prev) {
+    // NeighborExchange call will be made in caller
+  }
+}
+
+void PerformOddPhaseExchange(std::vector<int> &local, int rank, int size, bool is_even_rank, bool has_next,
+                             bool has_prev) {
+  if (!is_even_rank && has_next) {
+    // NeighborExchange call will be made in caller
+  }
+  if (is_even_rank && has_prev) {
+    // NeighborExchange call will be made in caller
+  }
+}
+
 }  // namespace
 
-void KamaletdinovQuicksortWithBatcherEvenOddMergeMPI::NeighborExchange(std::vector<int> &local, int partner_rank,
-                                                                       bool keep_lower) {
+static void NeighborExchangeStatic(std::vector<int> &local, int partner_rank, bool keep_lower) {
   const int send_size = static_cast<int>(local.size());
   int recv_size = 0;
   MPI_Sendrecv(&send_size, 1, MPI_INT, partner_rank, 0, &recv_size, 1, MPI_INT, partner_rank, 0, MPI_COMM_WORLD,
@@ -103,29 +124,32 @@ void KamaletdinovQuicksortWithBatcherEvenOddMergeMPI::NeighborExchange(std::vect
   }
 }
 
+void KamaletdinovQuicksortWithBatcherEvenOddMergeMPI::NeighborExchange(std::vector<int> &local, int partner_rank,
+                                                                       bool keep_lower) {
+  NeighborExchangeStatic(local, partner_rank, keep_lower);
+}
+
 void KamaletdinovQuicksortWithBatcherEvenOddMergeMPI::BatcherPhases(std::vector<int> &local, int rank, int size,
                                                                     int global_size) {
   int min_block = std::max(1, global_size / size);
   const int phase_count = (global_size + min_block - 1) / min_block;
+  const bool is_even_rank = (rank % 2 == 0);
+  const bool has_next = (rank + 1 < size);
+  const bool has_prev = (rank - 1 >= 0);
 
   for (int phase = 0; phase < phase_count; ++phase) {
     const bool even_phase = (phase % 2 == 0);
-    const bool is_even_rank = (rank % 2 == 0);
-    const bool has_next = (rank + 1 < size);
-    const bool has_prev = (rank - 1 >= 0);
 
     if (even_phase) {
       if (is_even_rank && has_next) {
         NeighborExchange(local, rank + 1, true);
-      }
-      if (!is_even_rank && has_prev) {
+      } else if (!is_even_rank && has_prev) {
         NeighborExchange(local, rank - 1, false);
       }
     } else {
       if (!is_even_rank && has_next) {
         NeighborExchange(local, rank + 1, true);
-      }
-      if (is_even_rank && has_prev) {
+      } else if (is_even_rank && has_prev) {
         NeighborExchange(local, rank - 1, false);
       }
     }
@@ -164,7 +188,7 @@ bool KamaletdinovQuicksortWithBatcherEvenOddMergeMPI::RunImpl() {
   std::vector<int> counts(size);
   std::vector<int> displs(size);
   for (int i = 0; i < size; ++i) {
-    counts[i] = global_size / size + (i < global_size % size ? 1 : 0);
+    counts[i] = (global_size / size) + (i < global_size % size ? 1 : 0);
   }
   std::partial_sum(counts.begin(), counts.end() - 1, displs.begin() + 1);
 
