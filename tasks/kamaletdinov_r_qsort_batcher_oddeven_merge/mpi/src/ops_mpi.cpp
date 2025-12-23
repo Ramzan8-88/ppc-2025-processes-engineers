@@ -125,9 +125,9 @@ void NeighborExchangeStatic(std::vector<int> &local, int partner_rank, bool keep
 
 }  // namespace
 
-void KamaletdinovQuicksortWithBatcherEvenOddMergeMPI::NeighborExchange(
-    std::vector<int> &local, int partner_rank,
-    bool keep_lower) {  // NOLINT(readability-convert-member-functions-to-static)
+void KamaletdinovQuicksortWithBatcherEvenOddMergeMPI::
+    NeighborExchange(  // NOLINT(readability-convert-member-functions-to-static)
+        std::vector<int> &local, int partner_rank, bool keep_lower) {
   NeighborExchangeStatic(local, partner_rank, keep_lower);
 }
 
