@@ -41,7 +41,7 @@ TEST_P(KamaletdinovQuicksortWithBatcherEvenOddMergePerfTests, QuicksortWithBatch
 
 const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, KamaletdinovQuicksortWithBatcherEvenOddMergeMPI,
                                                        KamaletdinovQuicksortWithBatcherEvenOddMergeSEQ>(
-    PPC_SETTINGS_kamaletdinov_quicksort_with_batcher_even_odd_merge);
+    PPC_SETTINGS_kamaletdinov_r_qsort_batcher_oddeven_merge);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

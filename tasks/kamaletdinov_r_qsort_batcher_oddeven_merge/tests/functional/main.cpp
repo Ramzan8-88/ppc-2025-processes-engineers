@@ -68,14 +68,14 @@ const std::array<TestType, 12> kTestParam = {
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<KamaletdinovQuicksortWithBatcherEvenOddMergeMPI, InType>(
-                       kTestParam, PPC_SETTINGS_kamaletdinov_quicksort_with_batcher_even_odd_merge),
+                       kTestParam, PPC_SETTINGS_kamaletdinov_r_qsort_batcher_oddeven_merge),
                    ppc::util::AddFuncTask<KamaletdinovQuicksortWithBatcherEvenOddMergeSEQ, InType>(
-                       kTestParam, PPC_SETTINGS_kamaletdinov_quicksort_with_batcher_even_odd_merge));
+                       kTestParam, PPC_SETTINGS_kamaletdinov_r_qsort_batcher_oddeven_merge));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName = KamaletdinovQuicksortWithBatcherEvenOddMergeFuncTests::PrintFuncTestName<
-    KamaletdinovQuicksortWithBatcherEvenOddMergeFuncTests>;
+    KamaletdinovQuicksortWithBatcherEvenOddMergeFuncTests>kamaletdinov_r_qsort_batcher_oddeven_merge
 
 INSTANTIATE_TEST_SUITE_P(QuicksortWithBatcherEvenOddMerge, KamaletdinovQuicksortWithBatcherEvenOddMergeFuncTests,
                          kGtestValues, kPerfTestName);
