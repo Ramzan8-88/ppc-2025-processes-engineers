@@ -6,7 +6,7 @@
 #include "kamaletdinov_r_qsort_batcher_oddeven_merge/common/include/common.hpp"
 #include "kamaletdinov_r_qsort_batcher_oddeven_merge/mpi/include/ops_mpi.hpp"
 #include "kamaletdinov_r_qsort_batcher_oddeven_merge/seq/include/ops_seq.hpp"
-#include "util/include/perf_test_util.hpp"
+#include "util/include/perf_test_util. hpp"
 
 namespace kamaletdinov_quicksort_with_batcher_even_odd_merge {
 
@@ -21,8 +21,7 @@ class KamaletdinovQuicksortWithBatcherEvenOddMergePerfTests : public ppc::util::
       vec[i] = kCount_ - i;
     }
     input_data_ = vec;
-    std::sort(vec.begin(), vec.end());
-    // std::ranges::sort(vec);
+    std::ranges::sort(vec);
     res_ = vec;
   }
 

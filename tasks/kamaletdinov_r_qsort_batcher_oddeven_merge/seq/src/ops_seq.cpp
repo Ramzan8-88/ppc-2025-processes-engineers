@@ -47,6 +47,29 @@ std::pair<int, int> KamaletdinovQuicksortWithBatcherEvenOddMergeSEQ::PartitionRa
   return std::make_pair(i, j);
 }
 
+void KamaletdinovQuicksortWithBatcherEvenOddMergeSEQ::PushPartitionsToStack(std::vector<std::pair<int, int>> &stack,
+                                                                            int left, int right,
+                                                                            const std::pair<int, int> &borders) {
+  const int left_size = borders.second - left;
+  const int right_size = right - borders.first;
+
+  if (left_size > right_size) {
+    if (left < borders.second) {
+      stack.emplace_back(left, borders.second);
+    }
+    if (borders.first < right) {
+      stack.emplace_back(borders.first, right);
+    }
+  } else {
+    if (borders.first < right) {
+      stack.emplace_back(borders.first, right);
+    }
+    if (left < borders.second) {
+      stack.emplace_back(left, borders.second);
+    }
+  }
+}
+
 bool KamaletdinovQuicksortWithBatcherEvenOddMergeSEQ::RunImpl() {
   std::vector<int> array = GetInput();
   if (array.size() < 2) {
@@ -69,25 +92,7 @@ bool KamaletdinovQuicksortWithBatcherEvenOddMergeSEQ::RunImpl() {
     }
 
     const auto borders = PartitionRange(array, left, right);
-
-    const int left_size = borders.second - left;
-    const int right_size = right - borders.first;
-
-    if (left_size > right_size) {
-      if (left < borders.second) {
-        stack.emplace_back(left, borders.second);
-      }
-      if (borders.first < right) {
-        stack.emplace_back(borders.first, right);
-      }
-    } else {
-      if (borders.first < right) {
-        stack.emplace_back(borders.first, right);
-      }
-      if (left < borders.second) {
-        stack.emplace_back(left, borders.second);
-      }
-    }
+    PushPartitionsToStack(stack, left, right, borders);
   }
 
   GetOutput().swap(array);
