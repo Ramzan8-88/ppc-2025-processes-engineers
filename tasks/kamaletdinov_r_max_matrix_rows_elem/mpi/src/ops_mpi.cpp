@@ -5,11 +5,61 @@
 #include <algorithm>
 #include <cstddef>
 #include <limits>
+#include <utility>
 #include <vector>
 
 #include "kamaletdinov_r_max_matrix_rows_elem/common/include/common.hpp"
 
 namespace kamaletdinov_r_max_matrix_rows_elem {
+
+namespace {
+
+// Helper function to calculate rows for a process index
+std::size_t CalculateRowsForProcess(int process_index, std::size_t rows_per_process, std::size_t remainder) {
+  std::size_t rows = rows_per_process;
+  if (std::cmp_less(static_cast<std::size_t>(process_index), remainder)) {
+    rows += 1;
+  }
+  return rows;
+}
+
+// Helper function to calculate start row for a rank
+std::size_t CalculateStartRow(int rank, std::size_t rows_per_process, std::size_t remainder) {
+  std::size_t start_row = 0;
+  for (int i = 0; i < rank; ++i) {
+    start_row += CalculateRowsForProcess(i, rows_per_process, remainder);
+  }
+  return start_row;
+}
+
+// Helper function to compute local maxima
+void ComputeLocalMaxima(const std::vector<int> &local_data, std::size_t local_rows, std::size_t m,
+                        std::size_t start_row, std::size_t n, std::vector<int> &local_max) {
+  for (std::size_t local_row = 0; local_row < local_rows; ++local_row) {
+    std::size_t global_row = start_row + local_row;
+    if (global_row >= n) {
+      break;
+    }
+    // Инициализируем максимум первым элементом строки
+    local_max[global_row] = local_data[local_row * m];
+    // Находим максимум в строке
+    for (std::size_t col = 1; col < m; ++col) {
+      local_max[global_row] = std::max(local_max[global_row], local_data[(local_row * m) + col]);
+    }
+  }
+}
+
+// Helper function to compute final result on rank 0
+void ComputeFinalResult(const std::vector<int> &recvbuf, int mpi_size, std::size_t n, std::vector<int> &result) {
+  for (std::size_t col = 0; col < n; ++col) {
+    result[col] = std::numeric_limits<int>::min();
+    for (int proc = 0; proc < mpi_size; ++proc) {
+      result[col] = std::max(result[col], recvbuf[(proc * n) + col]);
+    }
+  }
+}
+
+}  // namespace
 
 KamaletdinovRMaxMatrixRowsElemMPI::KamaletdinovRMaxMatrixRowsElemMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -65,10 +115,7 @@ bool KamaletdinovRMaxMatrixRowsElemMPI::RunImpl() {
   std::size_t current_displacement = 0;
 
   for (int i = 0; i < mpi_size; ++i) {
-    std::size_t rows_for_process = rows_per_process;
-    if (static_cast<std::size_t>(i) < remainder) {
-      rows_for_process += 1;
-    }
+    std::size_t rows_for_process = CalculateRowsForProcess(i, rows_per_process, remainder);
     sendcounts[i] = static_cast<int>(rows_for_process * m);
     displacements[i] = static_cast<int>(current_displacement);
     current_displacement += rows_for_process * m;
@@ -96,28 +143,10 @@ bool KamaletdinovRMaxMatrixRowsElemMPI::RunImpl() {
   std::vector<int> local_max(n, std::numeric_limits<int>::min());
 
   // Определяем, какие глобальные строки (столбцы исходной матрицы) обрабатывает этот процесс
-  std::size_t start_row = 0;
-  for (int i = 0; i < rank; ++i) {
-    std::size_t rows_for_i = rows_per_process;
-    if (static_cast<std::size_t>(i) < remainder) {
-      rows_for_i += 1;
-    }
-    start_row += rows_for_i;
-  }
+  std::size_t start_row = CalculateStartRow(rank, rows_per_process, remainder);
 
   // Обрабатываем локальные строки
-  for (std::size_t local_row = 0; local_row < local_rows; ++local_row) {
-    std::size_t global_row = start_row + local_row;
-    if (global_row >= n) {
-      break;
-    }
-    // Инициализируем максимум первым элементом строки
-    local_max[global_row] = local_data[local_row * m];
-    // Находим максимум в строке
-    for (std::size_t col = 1; col < m; ++col) {
-      local_max[global_row] = std::max(local_max[global_row], local_data[local_row * m + col]);
-    }
-  }
+  ComputeLocalMaxima(local_data, local_rows, m, start_row, n, local_max);
 
   // Корневой процесс получает все локальные максимумы
   std::vector<int> recvbuf;
@@ -131,12 +160,7 @@ bool KamaletdinovRMaxMatrixRowsElemMPI::RunImpl() {
   // На корневом процессе вычисляем финальные максимумы
   if (rank == 0) {
     std::vector<int> result(n);
-    for (std::size_t col = 0; col < n; ++col) {
-      result[col] = std::numeric_limits<int>::min();
-      for (int proc = 0; proc < mpi_size; ++proc) {
-        result[col] = std::max(result[col], recvbuf[proc * n + col]);
-      }
-    }
+    ComputeFinalResult(recvbuf, mpi_size, n, result);
     GetOutput() = result;
   }
 
