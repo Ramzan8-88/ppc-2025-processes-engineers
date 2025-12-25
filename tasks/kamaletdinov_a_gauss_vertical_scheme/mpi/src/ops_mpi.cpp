@@ -45,11 +45,86 @@ bool KamaletdinovAGaussVerticalSchemeMPI::PreProcessingImpl() {
 
   if (rank_ == 0) {
     std::copy(GetInput().begin() + 1, GetInput().end(), extended_matrix_.begin());
+    DistributeMatrixByStripes();
+  } else {
+    ReceiveMatrixStripe();
   }
-  MPI_Bcast(extended_matrix_.data(), n_ * (n_ + 1), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+  SynchronizeMatrixByStripes();
 
   solution_.resize(n_, 0.0);
   return true;
+}
+
+void KamaletdinovAGaussVerticalSchemeMPI::DistributeMatrixByStripes() {
+  int cols = n_ + 1;
+  for (int proc = 1; proc < size_; proc++) {
+    for (int i = 0; i < n_; i++) {
+      std::vector<double> stripe;
+      for (int j = proc; j < cols; j += size_) {
+        stripe.push_back(extended_matrix_[(i * cols) + j]);
+      }
+      MPI_Send(stripe.data(), static_cast<int>(stripe.size()), MPI_DOUBLE, proc, 0, MPI_COMM_WORLD);
+    }
+  }
+}
+
+void KamaletdinovAGaussVerticalSchemeMPI::ReceiveMatrixStripe() {
+  int cols = n_ + 1;
+  for (int i = 0; i < n_; i++) {
+    int stripe_size = 0;
+    for (int j = rank_; j < cols; j += size_) {
+      stripe_size++;
+    }
+    std::vector<double> stripe(stripe_size);
+    MPI_Recv(stripe.data(), stripe_size, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+    int idx = 0;
+    for (int j = rank_; j < cols; j += size_) {
+      extended_matrix_[(i * cols) + j] = stripe[idx++];
+    }
+  }
+}
+
+void KamaletdinovAGaussVerticalSchemeMPI::SynchronizeMatrixByStripes() {
+  for (int i = 0; i < n_; i++) {
+    ExchangeStripesForRow(i);
+  }
+}
+
+void KamaletdinovAGaussVerticalSchemeMPI::ExchangeStripesForRow(int row) {
+  for (int proc = 0; proc < size_; proc++) {
+    if (proc != rank_) {
+      ExchangeStripeWithProcess(row, proc);
+    }
+  }
+}
+
+void KamaletdinovAGaussVerticalSchemeMPI::ExchangeStripeWithProcess(int row, int proc) {
+  int cols = n_ + 1;
+  std::vector<double> my_stripe;
+  for (int j = rank_; j < cols; j += size_) {
+    my_stripe.push_back(extended_matrix_[(row * cols) + j]);
+  }
+
+  int recv_size = 0;
+  for (int j = proc; j < cols; j += size_) {
+    recv_size++;
+  }
+  std::vector<double> recv_stripe(recv_size);
+
+  if (rank_ < proc) {
+    MPI_Send(my_stripe.data(), static_cast<int>(my_stripe.size()), MPI_DOUBLE, proc, row, MPI_COMM_WORLD);
+    MPI_Recv(recv_stripe.data(), recv_size, MPI_DOUBLE, proc, row, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  } else {
+    MPI_Recv(recv_stripe.data(), recv_size, MPI_DOUBLE, proc, row, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Send(my_stripe.data(), static_cast<int>(my_stripe.size()), MPI_DOUBLE, proc, row, MPI_COMM_WORLD);
+  }
+
+  int idx = 0;
+  for (int j = proc; j < cols; j += size_) {
+    extended_matrix_[(row * cols) + j] = recv_stripe[idx++];
+  }
 }
 
 int KamaletdinovAGaussVerticalSchemeMPI::FindPivotRow(int k, int cols) {
