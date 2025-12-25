@@ -36,6 +36,9 @@ class KamaletdinovRMaxMatrixRowsElemTests : public ppc::util::BaseRunFuncTests<I
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    // реализована не стандратная проверка,
+    // так как вектор ответа в процессе с ранком 0 имеет больший размер
+    // для уменьшения времени на выделение лишней памяти
     for (std::size_t i = 0; i < correct_test_output_data_.size(); i++) {
       if (output_data[i] != correct_test_output_data_[i]) {
         return false;
@@ -63,6 +66,7 @@ class KamaletdinovRMaxMatrixRowsElemTests : public ppc::util::BaseRunFuncTests<I
     std::vector<int> val(m * n);
     std::vector<int> answer(n);
     // задание начальных значений для ответа
+    // первая строка матрицы задает максимальные значнечения для элементов столбцов
     for (std::size_t i = 0; i < n; i++) {
       val[i] = idis(gen);
       answer[i] = val[i];
@@ -76,6 +80,21 @@ class KamaletdinovRMaxMatrixRowsElemTests : public ppc::util::BaseRunFuncTests<I
     }
     input_data_ = std::make_tuple(m, n, val);
     correct_test_output_data_ = answer;
+
+    // debug output
+    //  std::string deb = "\n\n-----------\n";
+    //  for(std::size_t i = 0; i < m; i++) {
+    //    for(std::size_t j = 0; j < n; j++) {
+    //      deb += std::to_string(val[i*n + j]) + " ";
+    //    }
+    //    deb += "\n";
+    //  }
+    //  std::cout << deb;
+    //  std::cout << "----------\n";
+    //  for(std::size_t i = 0; i < n; i++) {
+    //    std::cout << answer[i] << " ";
+    //  }
+    //  std::cout << std::endl;
   }
 
   void GetDataFromFile(const TestType &params) {

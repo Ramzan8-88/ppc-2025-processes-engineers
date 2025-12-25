@@ -44,6 +44,16 @@ bool KamaletdinovRMaxMatrixRowsElemSEQ::RunImpl() {
   std::size_t m = std::get<0>(GetInput());
   std::size_t n = std::get<1>(GetInput());
 
+  // debug
+  //  std::string deb = "\n\n----\n";
+  //  for(std::size_t i = 0; i < n; i++) {
+  //    for(std::size_t j = 0; j < m; j++) {
+  //      deb += std::to_string(t_matrix_[i*m + j]) + " ";
+  //    }
+  //    deb += "\n";
+  //  }
+  //  std::cout << deb;
+
   std::vector<int> max_rows_elem(n);
   for (std::size_t i = 0; i < n; i++) {
     max_rows_elem[i] = t_matrix_[(i * m)];
@@ -51,6 +61,13 @@ bool KamaletdinovRMaxMatrixRowsElemSEQ::RunImpl() {
       max_rows_elem[i] = std::max(max_rows_elem[i], t_matrix_[(i * m) + j]);
     }
   }
+
+  // debug output
+  //  std::cout << "seq" << ":";
+  //  for(std::size_t i = 0; i < n; i++) {
+  //    std::cout << max_rows_elem[i] << " ";
+  //  }
+  //  std::cout << std::endl;
 
   GetOutput() = max_rows_elem;
   return true;

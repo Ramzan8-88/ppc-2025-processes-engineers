@@ -4,7 +4,6 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <limits>
 #include <utility>
 #include <vector>
 
@@ -13,52 +12,67 @@
 namespace kamaletdinov_r_max_matrix_rows_elem {
 
 namespace {
+void PrepareScattervArrays(int mpi_size, std::size_t total_size, std::vector<int> &sendcounts,
+                           std::vector<int> &displs) {
+  std::size_t procesess_step = total_size / mpi_size;
+  std::size_t remainder = total_size % mpi_size;
 
-// Helper function to calculate rows for a process index
-std::size_t CalculateRowsForProcess(int process_index, std::size_t rows_per_process, std::size_t remainder) {
-  std::size_t rows = rows_per_process;
-  if (std::cmp_less(static_cast<std::size_t>(process_index), remainder)) {
-    rows += 1;
-  }
-  return rows;
-}
-
-// Helper function to calculate start row for a rank
-std::size_t CalculateStartRow(int rank, std::size_t rows_per_process, std::size_t remainder) {
-  std::size_t start_row = 0;
-  for (int i = 0; i < rank; ++i) {
-    start_row += CalculateRowsForProcess(i, rows_per_process, remainder);
-  }
-  return start_row;
-}
-
-// Helper function to compute local maxima
-void ComputeLocalMaxima(const std::vector<int> &local_data, std::size_t local_rows, std::size_t m,
-                        std::size_t start_row, std::size_t n, std::vector<int> &local_max) {
-  for (std::size_t local_row = 0; local_row < local_rows; ++local_row) {
-    std::size_t global_row = start_row + local_row;
-    if (global_row >= n) {
-      break;
+  for (int i = 0; i < mpi_size; i++) {
+    sendcounts[i] = static_cast<int>(procesess_step);
+    if (std::cmp_less(i, remainder)) {
+      sendcounts[i]++;
     }
-    // Инициализируем максимум первым элементом строки
-    local_max[global_row] = local_data[local_row * m];
-    // Находим максимум в строке
-    for (std::size_t col = 1; col < m; ++col) {
-      local_max[global_row] = std::max(local_max[global_row], local_data[(local_row * m) + col]);
-    }
+    displs[i] = (i == 0) ? 0 : displs[i - 1] + sendcounts[i - 1];
   }
 }
 
-// Helper function to compute final result on rank 0
-void ComputeFinalResult(const std::vector<int> &recvbuf, int mpi_size, std::size_t n, std::vector<int> &result) {
-  for (std::size_t col = 0; col < n; ++col) {
-    result[col] = std::numeric_limits<int>::min();
-    for (int proc = 0; proc < mpi_size; ++proc) {
-      result[col] = std::max(result[col], recvbuf[(proc * n) + col]);
+void ProcessLocalMatrix(const std::vector<int> &local_matrix, std::size_t start, std::size_t end, std::size_t m,
+                        std::vector<int> &max_rows_elem) {
+  std::size_t row = start / m;
+  std::size_t local_idx = 0;
+
+  if (!local_matrix.empty()) {
+    max_rows_elem[row] = local_matrix[local_idx];
+  }
+
+  for (std::size_t i = start; i < end; i++) {
+    if (i == ((row + 1) * m)) {
+      row++;
+      if (local_idx < local_matrix.size()) {
+        max_rows_elem[row] = local_matrix[local_idx];
+      }
     }
+    if (local_idx < local_matrix.size()) {
+      max_rows_elem[row] = std::max(max_rows_elem[row], local_matrix[local_idx]);
+    }
+    local_idx++;
   }
 }
 
+void MergeResults(int rank, int mpi_size, std::size_t n, std::vector<int> &max_rows_elem) {
+  std::vector<int> gathered_data;
+  std::vector<int> recvcounts;
+  std::vector<int> displs;
+  if (rank == 0) {
+    gathered_data.resize(n * mpi_size);
+    recvcounts.resize(mpi_size);
+    displs.resize(mpi_size);
+    for (int i = 0; i < mpi_size; i++) {
+      recvcounts[i] = static_cast<int>(n);
+      displs[i] = static_cast<int>(i * n);
+    }
+  }
+  MPI_Gatherv(max_rows_elem.data(), static_cast<int>(n), MPI_INT, gathered_data.data(), recvcounts.data(),
+              displs.data(), MPI_INT, 0, MPI_COMM_WORLD);
+  if (rank == 0) {
+    for (std::size_t i = 0; i < n; i++) {
+      for (int j = 0; j < mpi_size; j++) {
+        max_rows_elem[i] = std::max(max_rows_elem[i], gathered_data[(j * n) + i]);
+      }
+    }
+  }
+  MPI_Bcast(max_rows_elem.data(), static_cast<int>(n), MPI_INT, 0, MPI_COMM_WORLD);
+}
 }  // namespace
 
 KamaletdinovRMaxMatrixRowsElemMPI::KamaletdinovRMaxMatrixRowsElemMPI(const InType &in) {
@@ -92,77 +106,62 @@ bool KamaletdinovRMaxMatrixRowsElemMPI::PreProcessingImpl() {
 }
 
 bool KamaletdinovRMaxMatrixRowsElemMPI::RunImpl() {
+  // проверка корректности данных
   if (!valid_) {
     return false;
   }
-
+  // получение размера матрицы
   std::size_t m = std::get<0>(GetInput());
   std::size_t n = std::get<1>(GetInput());
 
+  // debug
+  //  std::string deb = "\n\n-----------\n";
+  //  for(std::size_t i = 0; i < n; i++) {
+  //    for(std::size_t j = 0; j < m; j++) {
+  //      deb += std::to_string(t_matrix_[i*m + j]) + " ";
+  //    }
+  //    deb += "\n";
+  //  }
+  //  std::cout << deb;
+
+  // данные о процессе
   int rank = 0;
   int mpi_size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
 
-  // Распределяем строки транспонированной матрицы между процессами
-  // Транспонированная матрица имеет n строк по m элементов каждая
-  std::size_t rows_per_process = n / static_cast<std::size_t>(mpi_size);
-  std::size_t remainder = n % static_cast<std::size_t>(mpi_size);
-
-  // Подготовка sendcounts и displacements для Scatterv
+  // Подготовка массивов для MPI_Scatterv
   std::vector<int> sendcounts(mpi_size);
-  std::vector<int> displacements(mpi_size);
-  std::size_t current_displacement = 0;
+  std::vector<int> displs(mpi_size);
+  PrepareScattervArrays(mpi_size, t_matrix_.size(), sendcounts, displs);
 
-  for (int i = 0; i < mpi_size; ++i) {
-    std::size_t rows_for_process = CalculateRowsForProcess(i, rows_per_process, remainder);
-    sendcounts[i] = static_cast<int>(rows_for_process * m);
-    displacements[i] = static_cast<int>(current_displacement);
-    current_displacement += rows_for_process * m;
-  }
+  // Выделение памяти для локальной части матрицы
+  std::vector<int> local_matrix(sendcounts[rank]);
 
-  // Локальный буфер для приема данных
-  std::size_t local_elements = sendcounts[rank];
-  std::size_t local_rows = local_elements / m;
-  std::vector<int> local_data(local_elements);
+  // Распределение матрицы с помощью MPI_Scatterv
+  MPI_Scatterv(t_matrix_.data(), sendcounts.data(), displs.data(), MPI_INT, local_matrix.data(), sendcounts[rank],
+               MPI_INT, 0, MPI_COMM_WORLD);
 
-  // Распределяем данные с использованием Scatterv
-  MPI_Scatterv(t_matrix_.data(),      // sendbuf
-               sendcounts.data(),     // sendcounts
-               displacements.data(),  // displacements
-               MPI_INT,               // datatype
-               local_data.data(),     // recvbuf
-               sendcounts[rank],      // recvcount
-               MPI_INT,               // datatype
-               0,                     // root
-               MPI_COMM_WORLD         // comm
-  );
+  // Обработка локальной части матрицы
+  std::size_t start = displs[rank];
+  std::size_t end = start + sendcounts[rank];
 
-  // Вычисляем локальный максимум для строк, которые получил этот процесс
-  // Каждая строка транспонированной матрицы соответствует столбцу исходной матрицы
-  std::vector<int> local_max(n, std::numeric_limits<int>::min());
+  // выделение памяти для сохранения максимального элемента
+  std::vector<int> max_rows_elem(n, 0);
 
-  // Определяем, какие глобальные строки (столбцы исходной матрицы) обрабатывает этот процесс
-  std::size_t start_row = CalculateStartRow(rank, rows_per_process, remainder);
+  ProcessLocalMatrix(local_matrix, start, end, m, max_rows_elem);
 
-  // Обрабатываем локальные строки
-  ComputeLocalMaxima(local_data, local_rows, m, start_row, n, local_max);
+  // Объединение результатов от всех процессов
+  MergeResults(rank, mpi_size, n, max_rows_elem);
 
-  // Корневой процесс получает все локальные максимумы
-  std::vector<int> recvbuf;
-  if (rank == 0) {
-    recvbuf.resize(static_cast<std::size_t>(mpi_size) * n, std::numeric_limits<int>::min());
-  }
+  // debug output
+  //  std::cout << rank << ":";
+  //  for(std::size_t i = 0; i < n; i++) {
+  //    std::cout << max_rows_elem[i] << " ";
+  //  }
+  //  std::cout << std::endl;
 
-  MPI_Gather(local_max.data(), static_cast<int>(n), MPI_INT, rank == 0 ? recvbuf.data() : nullptr, static_cast<int>(n),
-             MPI_INT, 0, MPI_COMM_WORLD);
-
-  // На корневом процессе вычисляем финальные максимумы
-  if (rank == 0) {
-    std::vector<int> result(n);
-    ComputeFinalResult(recvbuf, mpi_size, n, result);
-    GetOutput() = result;
-  }
+  GetOutput() = max_rows_elem;
 
   return true;
 }

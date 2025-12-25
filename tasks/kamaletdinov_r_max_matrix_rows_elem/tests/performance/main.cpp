@@ -55,6 +55,21 @@ class KamaletdinovRMaxMatrixRowsElemPerfTest : public ppc::util::BaseRunPerfTest
     }
     input_data_ = std::make_tuple(m, n, val);
     correct_test_output_data_ = answer;
+
+    // debug output
+    //  std::string deb = "\n\n-----------\n";
+    //  for(std::size_t i = 0; i < m; i++) {
+    //    for(std::size_t j = 0; j < n; j++) {
+    //      deb += std::to_string(val[i*n + j]) + " ";
+    //    }
+    //    deb += "\n";
+    //  }
+    //  std::cout << deb;
+    //  std::cout << "----------\n";
+    //  for(std::size_t i = 0; i < n; i++) {
+    //    std::cout << answer[i] << " ";
+    //  }
+    //  std::cout << std::endl;
   }
 };
 
