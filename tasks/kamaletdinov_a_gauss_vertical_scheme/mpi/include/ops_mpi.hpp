@@ -8,13 +8,13 @@
 namespace kamaletdinov_a_gauss_vertical_scheme {
 
 class KamaletdinovAGaussVerticalSchemeMPI : public BaseTask {
-public:
+ public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kMPI;
   }
   explicit KamaletdinovAGaussVerticalSchemeMPI(const InType &in);
 
-private:
+ private:
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
@@ -39,4 +39,4 @@ private:
   int size_{0};
 };
 
-} // namespace kamaletdinov_a_gauss_vertical_scheme
+}  // namespace kamaletdinov_a_gauss_vertical_scheme

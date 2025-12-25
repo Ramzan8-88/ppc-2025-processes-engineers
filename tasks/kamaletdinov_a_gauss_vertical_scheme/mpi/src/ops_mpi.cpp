@@ -11,8 +11,7 @@
 
 namespace kamaletdinov_a_gauss_vertical_scheme {
 
-KamaletdinovAGaussVerticalSchemeMPI::KamaletdinovAGaussVerticalSchemeMPI(
-    const InType &in) {
+KamaletdinovAGaussVerticalSchemeMPI::KamaletdinovAGaussVerticalSchemeMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
@@ -29,8 +28,7 @@ bool KamaletdinovAGaussVerticalSchemeMPI::ValidationImpl() {
   if (n <= 0) {
     return false;
   }
-  std::size_t expected_size =
-      1 + (static_cast<std::size_t>(n) * static_cast<std::size_t>(n + 1));
+  std::size_t expected_size = 1 + (static_cast<std::size_t>(n) * static_cast<std::size_t>(n + 1));
   return GetInput().size() == expected_size;
 }
 
@@ -46,8 +44,7 @@ bool KamaletdinovAGaussVerticalSchemeMPI::PreProcessingImpl() {
   extended_matrix_.resize(static_cast<std::size_t>(n_) * (n_ + 1));
 
   if (rank_ == 0) {
-    std::copy(GetInput().begin() + 1, GetInput().end(),
-              extended_matrix_.begin());
+    std::copy(GetInput().begin() + 1, GetInput().end(), extended_matrix_.begin());
     DistributeMatrixByStripes();
   } else {
     ReceiveMatrixStripe();
@@ -67,8 +64,7 @@ void KamaletdinovAGaussVerticalSchemeMPI::DistributeMatrixByStripes() {
       for (int j = proc; j < cols; j += size_) {
         stripe.push_back(extended_matrix_[(i * cols) + j]);
       }
-      MPI_Send(stripe.data(), static_cast<int>(stripe.size()), MPI_DOUBLE, proc,
-               0, MPI_COMM_WORLD);
+      MPI_Send(stripe.data(), static_cast<int>(stripe.size()), MPI_DOUBLE, proc, 0, MPI_COMM_WORLD);
     }
   }
 }
@@ -81,8 +77,7 @@ void KamaletdinovAGaussVerticalSchemeMPI::ReceiveMatrixStripe() {
       stripe_size++;
     }
     std::vector<double> stripe(stripe_size);
-    MPI_Recv(stripe.data(), stripe_size, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD,
-             MPI_STATUS_IGNORE);
+    MPI_Recv(stripe.data(), stripe_size, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
     int idx = 0;
     for (int j = rank_; j < cols; j += size_) {
@@ -105,8 +100,7 @@ void KamaletdinovAGaussVerticalSchemeMPI::ExchangeStripesForRow(int row) {
   }
 }
 
-void KamaletdinovAGaussVerticalSchemeMPI::ExchangeStripeWithProcess(int row,
-                                                                    int proc) {
+void KamaletdinovAGaussVerticalSchemeMPI::ExchangeStripeWithProcess(int row, int proc) {
   int cols = n_ + 1;
   std::vector<double> my_stripe;
   for (int j = rank_; j < cols; j += size_) {
@@ -120,15 +114,11 @@ void KamaletdinovAGaussVerticalSchemeMPI::ExchangeStripeWithProcess(int row,
   std::vector<double> recv_stripe(recv_size);
 
   if (rank_ < proc) {
-    MPI_Send(my_stripe.data(), static_cast<int>(my_stripe.size()), MPI_DOUBLE,
-             proc, row, MPI_COMM_WORLD);
-    MPI_Recv(recv_stripe.data(), recv_size, MPI_DOUBLE, proc, row,
-             MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Send(my_stripe.data(), static_cast<int>(my_stripe.size()), MPI_DOUBLE, proc, row, MPI_COMM_WORLD);
+    MPI_Recv(recv_stripe.data(), recv_size, MPI_DOUBLE, proc, row, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   } else {
-    MPI_Recv(recv_stripe.data(), recv_size, MPI_DOUBLE, proc, row,
-             MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    MPI_Send(my_stripe.data(), static_cast<int>(my_stripe.size()), MPI_DOUBLE,
-             proc, row, MPI_COMM_WORLD);
+    MPI_Recv(recv_stripe.data(), recv_size, MPI_DOUBLE, proc, row, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Send(my_stripe.data(), static_cast<int>(my_stripe.size()), MPI_DOUBLE, proc, row, MPI_COMM_WORLD);
   }
 
   int idx = 0;
@@ -150,16 +140,13 @@ int KamaletdinovAGaussVerticalSchemeMPI::FindPivotRow(int k, int cols) {
   return max_row;
 }
 
-void KamaletdinovAGaussVerticalSchemeMPI::SwapRows(int row1, int row2,
-                                                   int cols) {
+void KamaletdinovAGaussVerticalSchemeMPI::SwapRows(int row1, int row2, int cols) {
   for (int j = 0; j < cols; j++) {
-    std::swap(extended_matrix_[(row1 * cols) + j],
-              extended_matrix_[(row2 * cols) + j]);
+    std::swap(extended_matrix_[(row1 * cols) + j], extended_matrix_[(row2 * cols) + j]);
   }
 }
 
-void KamaletdinovAGaussVerticalSchemeMPI::SynchronizeRow(int k, int row,
-                                                         int cols) {
+void KamaletdinovAGaussVerticalSchemeMPI::SynchronizeRow(int k, int row, int cols) {
   std::vector<double> row_data(cols - k);
   for (int j = k; j < cols; j++) {
     row_data[j - k] = extended_matrix_[(row * cols) + j];
@@ -168,8 +155,7 @@ void KamaletdinovAGaussVerticalSchemeMPI::SynchronizeRow(int k, int row,
   if (rank_ == 0) {
     for (int proc = 1; proc < size_; proc++) {
       std::vector<double> recv_data(cols - k);
-      MPI_Recv(recv_data.data(), cols - k, MPI_DOUBLE, proc, 0, MPI_COMM_WORLD,
-               MPI_STATUS_IGNORE);
+      MPI_Recv(recv_data.data(), cols - k, MPI_DOUBLE, proc, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
       for (int j = k + proc; j < cols; j += size_) {
         row_data[j - k] = recv_data[j - k];
       }
@@ -182,8 +168,7 @@ void KamaletdinovAGaussVerticalSchemeMPI::SynchronizeRow(int k, int row,
     }
   } else {
     MPI_Send(row_data.data(), cols - k, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
-    MPI_Recv(row_data.data(), cols - k, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD,
-             MPI_STATUS_IGNORE);
+    MPI_Recv(row_data.data(), cols - k, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     for (int j = k; j < cols; j++) {
       extended_matrix_[(row * cols) + j] = row_data[j - k];
     }
@@ -204,8 +189,7 @@ void KamaletdinovAGaussVerticalSchemeMPI::EliminateColumn(int k, int cols) {
     double factor = extended_matrix_[(i * cols) + k];
     int start_col = k + rank_;
     for (int j = start_col; j < cols; j += size_) {
-      extended_matrix_[(i * cols) + j] -=
-          factor * extended_matrix_[(k * cols) + j];
+      extended_matrix_[(i * cols) + j] -= factor * extended_matrix_[(k * cols) + j];
     }
   }
 
@@ -247,4 +231,4 @@ bool KamaletdinovAGaussVerticalSchemeMPI::PostProcessingImpl() {
   return true;
 }
 
-} // namespace kamaletdinov_a_gauss_vertical_scheme
+}  // namespace kamaletdinov_a_gauss_vertical_scheme
