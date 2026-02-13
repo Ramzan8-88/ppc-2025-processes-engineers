@@ -127,4 +127,5 @@
 ## 9. Ссылки
 1. Лекции по параллельному программированию
 2. Практические занятия по параллельному программированию
-3. Batcher, K.E. (1968). "Sorting networks and their applications". Proceedings of the April 30-May 2, 1968, spring joint computer conference
+3. Batcher, K. E. (1968). "Sorting networks and their applications". Proceedings of the April 30-May 2, 1968, spring joint computer conference
+
